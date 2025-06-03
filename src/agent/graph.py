@@ -5,7 +5,10 @@ Returns a predefined response. Replace logic and configuration as needed.
 
 from __future__ import annotations
 
+import asyncio
+import json
 import logging
+import os
 from dataclasses import dataclass
 from typing import Optional, TypedDict
 
@@ -43,19 +46,15 @@ async def graph(config: RunnableConfig):
     model = init_chat_model(
         configuration.get("model", "google_genai:gemini-2.0-flash"),
     )
-    client = MultiServerMCPClient(
-        {
-            "math": {
-                "command": "python",
-                "args": ["/Users/privetin/Projects/agent/src/agent/math.py"],
-                "transport": "stdio",
-            },
-            "weather": {
-                "url": "http://localhost:8000/mcp",
-                "transport": "streamable_http",
-            },
-        }
-    )
+
+    def _load_config_sync():
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        config_path = os.path.join(script_dir, "config.json")
+        with open(config_path) as f:
+            return json.load(f)
+
+    def_config = await asyncio.to_thread(_load_config_sync)
+    client = MultiServerMCPClient(def_config["mcp"]["servers"])
     tools = await client.get_tools()
     agent = create_react_agent(
         model=model,
