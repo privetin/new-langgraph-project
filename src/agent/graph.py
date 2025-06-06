@@ -54,7 +54,11 @@ async def graph(config: RunnableConfig):
             return json.load(f)
 
     def_config = await asyncio.to_thread(_load_config_sync)
-    client = MultiServerMCPClient(def_config["mcp"]["servers"])
+    servers_config = def_config["mcp"]["servers"]
+    for server_config in servers_config.values():
+        if "transport" not in server_config:
+            server_config["transport"] = "stdio"
+    client = MultiServerMCPClient(servers_config)
     tools = await client.get_tools()
     agent = create_react_agent(
         model=model,
