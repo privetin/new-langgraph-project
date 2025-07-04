@@ -12,8 +12,10 @@ dependencies = [
     "langchain",
     "langchain-google-genai",
     "langchain-mcp-adapters",
+    "langchain-mistralai",
     "langgraph>=0.2.6",
     "langmem",
+    "numpy",
     "python-dotenv>=1.0.1",
 ]
 

@@ -15,6 +15,7 @@ from langchain_core.runnables import RunnableConfig
 from langchain_mcp_adapters.client import MultiServerMCPClient
 from langgraph.prebuilt import create_react_agent
 from langgraph.prebuilt.chat_agent_executor import AgentState
+from langmem import create_manage_memory_tool, create_search_memory_tool
 from langmem.short_term import SummarizationNode
 
 
@@ -69,7 +70,11 @@ async def graph(config: RunnableConfig):
     tools = await client.get_tools()
     agent = create_react_agent(
         model=model,
-        tools=tools,
+        tools=[
+            *tools,
+            create_manage_memory_tool(namespace=("memories",)),
+            create_search_memory_tool(namespace=("memories",)),
+        ],
         pre_model_hook=summarization_node,
         state_schema=State,
         config_schema=Configuration,
