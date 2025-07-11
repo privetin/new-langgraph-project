@@ -9,7 +9,8 @@ from dataclasses import dataclass
 from typing import Any, Dict, TypedDict
 
 from langchain_core.runnables import RunnableConfig
-from langgraph.graph import StateGraph
+from langgraph.prebuilt import create_react_agent
+from langgraph.prebuilt.chat_agent_executor import AgentState
 
 
 class Configuration(TypedDict):
@@ -23,7 +24,7 @@ class Configuration(TypedDict):
 
 
 @dataclass
-class State:
+class State(AgentState):
     """Input state for the agent.
 
     Defines the initial structure of incoming data.
@@ -41,14 +42,15 @@ async def call_model(state: State, config: RunnableConfig) -> Dict[str, Any]:
     configuration = config["configurable"]
     return {
         "changeme": "output from call_model. "
-        f'Configured with {configuration.get("my_configurable_param")}'
+        f"Configured with {configuration.get('my_configurable_param')}"
     }
 
 
 # Define the graph
-graph = (
-    StateGraph(State, config_schema=Configuration)
-    .add_node(call_model)
-    .add_edge("__start__", "call_model")
-    .compile(name="New Graph")
+graph = create_react_agent(
+    "",
+    tools=[],
+    state_schema=State,
+    config_schema=Configuration,
+    name="New Graph",
 )
