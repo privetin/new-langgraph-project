@@ -13,8 +13,13 @@ from typing import Any, Dict, TypedDict
 
 from langchain_core.runnables import RunnableConfig
 from langchain_mcp_adapters.client import MultiServerMCPClient
+from langgraph.checkpoint.memory import InMemorySaver
 from langgraph.prebuilt import create_react_agent
 from langgraph.prebuilt.chat_agent_executor import AgentState
+
+from agent.human import add_human_in_the_loop
+
+checkpointer = InMemorySaver()
 
 
 class Configuration(TypedDict):
@@ -56,12 +61,14 @@ async def graph(config: RunnableConfig) -> Dict[str, Any]:
         server.setdefault("transport", "stdio")
     client = MultiServerMCPClient(servers)
     tools = await client.get_tools()
+    manned_tools = [add_human_in_the_loop(tool) for tool in tools]
     # Define the graph
     agent = create_react_agent(
         "",
-        tools=tools,
+        tools=manned_tools,
         state_schema=State,
         config_schema=Configuration,
+        checkpointer=checkpointer,
         name="New Graph",
     )
     return agent
